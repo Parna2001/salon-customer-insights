@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salon Customer Insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F8F3EE;
+    --surface: #FFFFFF;
+    --surface-2: #F3ECE6;
+    --ink: #2B2026;
+    --ink-2: #5E5057;
+    --ink-3: #8A7C83;
+    --rule: #E6DCD4;
+    --grid: #EFE7E1;
+    --accent: #9C3A5E;
+    --birth: #C2456E;
+    --anniv: #2F6FB3;
+    --trend: #B7791F;
+    --surname: #7B4FB0;
+    --warn-bg: #FBEFD9;
+    --warn-ink: #7A4B06;
+    --shadow: 0 1px 2px rgb(43 32 38 / .05), 0 4px 16px rgb(43 32 38 / .04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1A1417; --surface: #241C21; --surface-2: #2D2429;
+      --ink: #F4ECEF; --ink-2: #C9BBC2; --ink-3: #978992;
+      --rule: #3A2F35; --grid: #30272C; --accent: #E88AAA;
+      --birth: #E0668E; --anniv: #5B96DB; --trend: #C0852A; --surname: #A077D6;
+      --warn-bg: #3A2C14; --warn-ink: #F0C878;
+      --shadow: 0 1px 2px rgb(0 0 0 / .3);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1A1417; --surface: #241C21; --surface-2: #2D2429;
+    --ink: #F4ECEF; --ink-2: #C9BBC2; --ink-3: #978992;
+    --rule: #3A2F35; --grid: #30272C; --accent: #E88AAA;
+    --birth: #E0668E; --anniv: #5B96DB; --trend: #C0852A; --surname: #A077D6;
+    --warn-bg: #3A2C14; --warn-ink: #F0C878;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 400 15px/1.5 "Instrument Sans", system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1, h2, .hero-num, .tile .num { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-spacing: -.01em; }
+  h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.1; margin: 0; }
+  h2 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: var(--ink-2); margin: 6px 0 0; }
+  .small { font-size: 13px; color: var(--ink-3); }
+
+  header { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 24px; }
+  .theme-btn {
+    font: inherit; font-size: 13px; color: var(--ink-2); background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 999px; padding: 6px 14px; cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--ink); }
+  .banner {
+    background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px;
+    padding: 10px 14px; font-size: 14px; margin-bottom: 20px; display: none;
+  }
+  .banner.show { display: block; }
+
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); min-width: 0; }
+  .grid { display: grid; gap: 16px; }
+  .tiles { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 16px; }
+  .two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); margin-bottom: 16px; }
+  .one { margin-bottom: 16px; }
+
+  .hero { grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between; background: var(--surface-2); }
+  @media (max-width: 420px) { .hero { grid-column: span 1; } }
+  .hero-num { font-size: 64px; line-height: 1; margin-top: 8px; }
+  .tile .label { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+  .tile .num { font-size: 32px; line-height: 1.1; margin-top: 6px; }
+  .tile .pct { font-size: 13px; color: var(--ink-3); }
+  .meter { height: 4px; border-radius: 2px; background: var(--grid); margin-top: 10px; overflow: hidden; }
+  .meter > span { display: block; height: 100%; background: var(--ink-3); border-radius: 2px; }
+
+  .chart { width: 100%; margin-top: 12px; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart text { font-family: "Instrument Sans", system-ui, sans-serif; fill: var(--ink-3); font-size: 11px; }
+  .chart text.val { fill: var(--ink-2); font-weight: 600; }
+  .chart text.now { fill: var(--ink); font-weight: 600; }
+  .chart .gridline { stroke: var(--grid); stroke-width: 1; }
+  .chart .baseline { stroke: var(--rule); stroke-width: 1; }
+  .chart .bar { transition: opacity .12s; }
+  .chart .hit { fill: transparent; cursor: default; }
+  .chart .hit:hover + .bar, .chart g.hover .bar { opacity: .75; }
+
+  details { margin-top: 12px; }
+  summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 600; color: var(--ink-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  td.num, th.num { text-align: right; }
+  .table-scroll { overflow-x: auto; margin-top: 12px; }
+  .pill { display: inline-block; background: var(--surface-2); border-radius: 999px; padding: 1px 8px; margin: 2px 4px 2px 0; font-size: 13px; }
+  .phone { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 13px; white-space: nowrap; }
+  .empty { color: var(--ink-3); font-size: 14px; padding: 12px 0; }
+
+  #tip {
+    position: fixed; pointer-events: none; z-index: 10; opacity: 0; transition: opacity .1s;
+    background: var(--ink); color: var(--bg); font-size: 13px; padding: 6px 10px; border-radius: 8px;
+    white-space: nowrap; transform: translate(-50%, calc(-100% - 10px));
+  }
+  #tip.show { opacity: 1; }
+  footer { margin-top: 32px; font-size: 13px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Salon Customer Insights</h1>
+      <p class="sub" id="subtitle">Loading…</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle colour theme">Theme: auto</button>
+  </header>
+
+  <div class="banner" id="sampleBanner">
+    Showing <strong>synthetic sample data</strong> (data.sample.json). Real numbers only appear when
+    <code>dashboard/data.json</code> is generated locally by <code>scripts/clean_data.py</code>.
+  </div>
+
+  <section class="grid tiles" id="tiles" aria-label="Summary"></section>
+
+  <section class="grid two">
+    <div class="card">
+      <h2>Birthdays by month</h2>
+      <div class="small" id="birthNote"></div>
+      <div class="chart" id="birthChart"></div>
+    </div>
+    <div class="card">
+      <h2>Anniversaries by month</h2>
+      <div class="small" id="annivNote"></div>
+      <div class="chart" id="annivChart"></div>
+    </div>
+  </section>
+
+  <section class="grid one">
+    <div class="card">
+      <h2>New customers per month</h2>
+      <div class="small" id="trendNote"></div>
+      <div class="chart" id="trendChart"></div>
+    </div>
+  </section>
+
+  <section class="grid two">
+    <div class="card">
+      <h2>Top surnames</h2>
+      <div class="small">Customers sharing a last name</div>
+      <div class="chart" id="surnameChart"></div>
+    </div>
+    <div class="card">
+      <h2>Duplicate mobile numbers</h2>
+      <div class="small" id="dupNote"></div>
+      <div class="table-scroll" id="dupTable"></div>
+    </div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+(() => {
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const SHORT = MONTHS.map(m => m.slice(0, 3));
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const nf = new Intl.NumberFormat();
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  // ---- theme toggle: auto -> light -> dark ----
+  const root = document.documentElement;
+  const order = ["auto", "light", "dark"];
+  let theme = "auto";
+  try { theme = localStorage.getItem("salon-theme") || "auto"; } catch {}
+  const applyTheme = () => {
+    if (theme === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
+    $("themeBtn").textContent = "Theme: " + theme;
+  };
+  $("themeBtn").addEventListener("click", () => {
+    theme = order[(order.indexOf(theme) + 1) % order.length];
+    try { localStorage.setItem("salon-theme", theme); } catch {}
+    applyTheme();
+  });
+  applyTheme();
+
+  // ---- tooltip ----
+  const tip = $("tip");
+  const showTip = (e, html) => { tip.innerHTML = html; tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; tip.classList.add("show"); };
+  const hideTip = () => tip.classList.remove("show");
+
+  const el = (tag, attrs = {}, parent) => {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  // Bar with 4px rounded data-end, square at the baseline.
+  const barPath = (x, y, w, h, horizontal) => {
+    const r = Math.min(4, w / 2, h / 2);
+    if (h <= 0 || w <= 0) return "";
+    if (horizontal) return `M${x},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} H${x} Z`;
+    return `M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z`;
+  };
+  // Integer tick step (1, 2, 5, 10, 20, ...) giving at most ~4 gridlines.
+  const niceStep = v => {
+    const raw = Math.max(1, v / 4), p = Math.pow(10, Math.floor(Math.log10(raw)));
+    for (const m of [1, 2, 5, 10]) if (m * p >= raw) return m * p;
+  };
+
+  function tableView(rows, headers) {
+    const d = document.createElement("details");
+    d.innerHTML = `<summary>View as table</summary><div class="table-scroll"><table><thead><tr>${
+      headers.map((h, i) => `<th class="${i ? "num" : ""}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${
+      rows.map(r => `<tr>${r.map((c, i) => `<td class="${i ? "num" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("")
+    }</tbody></table></div>`;
+    return d;
+  }
+
+  // Vertical bar chart: data = [{label, full, value}]
+  function columnChart(host, data, color, { unit = "customers", highlight = -1, labelEvery = 1 } = {}) {
+    host.innerHTML = "";
+    const W = Math.max(280, host.clientWidth), H = 220;
+    const m = { t: 20, r: 4, b: 26, l: 30 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const top = Math.max(1, ...data.map(d => d.value));
+    const step = niceStep(top), max = Math.ceil(top / step) * step;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": host.dataset.label || "" }, host);
+    for (let v = 0; v <= max; v += step) {
+      const y = m.t + ih - ih * v / max;
+      el("line", { class: v ? "gridline" : "baseline", x1: m.l, x2: W - m.r, y1: y, y2: y }, svg);
+      el("text", { x: m.l - 6, y: y + 4, "text-anchor": "end" }, svg).textContent = v;
+    }
+    const slot = iw / data.length, gap = Math.max(2, Math.min(slot * 0.3, 14)), bw = slot - gap;
+    const peak = Math.max(...data.map(d => d.value));
+    data.forEach((d, i) => {
+      const x = m.l + i * slot + gap / 2, h = ih * d.value / max, y = m.t + ih - h;
+      const g = el("g", {}, svg);
+      el("path", { class: "bar", d: barPath(x, y, bw, h), fill: color }, g);
+      const hit = el("rect", { class: "hit", x: m.l + i * slot, y: m.t, width: slot, height: ih }, g);
+      g.insertBefore(hit, g.firstChild);
+      hit.addEventListener("mousemove", e => { g.classList.add("hover"); showTip(e, `<strong>${esc(d.full)}</strong> · ${nf.format(d.value)} ${unit}`); });
+      hit.addEventListener("mouseleave", () => { g.classList.remove("hover"); hideTip(); });
+      if (d.value === peak && peak > 0) el("text", { class: "val", x: x + bw / 2, y: y - 6, "text-anchor": "middle" }, svg).textContent = d.value;
+      if (i % labelEvery === 0 || i === highlight)
+        el("text", { class: i === highlight ? "now" : "", x: x + bw / 2, y: H - 8, "text-anchor": "middle" }, svg).textContent = d.label;
+    });
+  }
+
+  // Horizontal bar chart for ranked categories.
+  function barList(host, data, color) {
+    host.innerHTML = "";
+    if (!data.length) { host.innerHTML = '<div class="empty">No surnames recorded.</div>'; return; }
+    const W = Math.max(280, host.clientWidth), row = 26, H = data.length * row;
+    const labelW = Math.min(130, W * 0.35), valW = 30, iw = W - labelW - valW;
+    const max = Math.max(...data.map(d => d.value));
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Top surnames" }, host);
+    data.forEach((d, i) => {
+      const y = i * row, w = Math.max(2, iw * d.value / max), bh = row - 8;
+      const g = el("g", {}, svg);
+      el("rect", { class: "hit", x: 0, y, width: W, height: row }, g);
+      el("text", { x: labelW - 10, y: y + row / 2 + 4, "text-anchor": "end" }, g).textContent = d.label;
+      el("path", { class: "bar", d: barPath(labelW, y + 4, w, bh, true), fill: color }, g);
+      el("text", { class: "val", x: labelW + w + 6, y: y + row / 2 + 4 }, g).textContent = d.value;
+      g.addEventListener("mousemove", e => { g.classList.add("hover"); showTip(e, `<strong>${esc(d.label)}</strong> · ${nf.format(d.value)} customers`); });
+      g.addEventListener("mouseleave", () => { g.classList.remove("hover"); hideTip(); });
+    });
+  }
+
+  function monthSeries(obj) {
+    return MONTHS.map((m, i) => ({ label: SHORT[i], full: m, value: obj?.[m] ?? 0 }));
+  }
+
+  // Fill every month between first and last entry so gaps show as zero.
+  function trendSeries(byMonth) {
+    const keys = Object.keys(byMonth || {}).sort();
+    if (!keys.length) return [];
+    let [y, mo] = keys[0].split("-").map(Number);
+    const [ey, em] = keys[keys.length - 1].split("-").map(Number);
+    const out = [];
+    while (y < ey || (y === ey && mo <= em)) {
+      const k = `${y}-${String(mo).padStart(2, "0")}`;
+      out.push({ label: `${SHORT[mo - 1]} ’${String(y).slice(2)}`, full: `${MONTHS[mo - 1]} ${y}`, value: byMonth[k] || 0 });
+      if (++mo > 12) { mo = 1; y++; }
+    }
+    return out;
+  }
+
+  function tile(label, value, total, { hero = false, note = "" } = {}) {
+    const d = document.createElement("div");
+    d.className = "card tile" + (hero ? " hero" : "");
+    if (hero) {
+      d.innerHTML = `<div class="label">${esc(label)}</div><div class="hero-num">${nf.format(value)}</div><div class="small">${esc(note)}</div>`;
+    } else {
+      const pct = total ? Math.round(100 * value / total) : 0;
+      d.innerHTML = `<div class="label">${esc(label)}</div><div class="num">${nf.format(value)}</div>
+        <div class="pct">${pct}% of customers${note ? " · " + esc(note) : ""}</div>
+        <div class="meter" aria-hidden="true"><span style="width:${pct}%"></span></div>`;
+    }
+    return d;
+  }
+
+  function render(data) {
+    const s = data.stats, total = s.total_customers;
+    const css = getComputedStyle(root);
+    const color = name => css.getPropertyValue(name).trim();
+
+    $("sampleBanner").classList.toggle("show", !!data.sample);
+    $("subtitle").textContent = data.sample
+      ? "Demo view with synthetic customers"
+      : `Generated ${s.generated_at.replace("T", " ")}`;
+
+    const tiles = $("tiles"); tiles.innerHTML = "";
+    tiles.append(
+      tile("Total customers", total, total, { hero: true, note: `${nf.format(s.unique_mobiles)} unique mobile numbers` }),
+      tile("Missing phone", s.missing_phone, total),
+      tile("Missing birthday", s.missing_birthday, total),
+      tile("Missing anniversary", s.missing_anniversary, total),
+      tile("Duplicate mobiles", s.duplicate_mobile_rows, total, { note: `${s.duplicate_mobile_groups} groups` }),
+    );
+
+    const nowMonth = new Date().getMonth();
+    const bSeries = monthSeries(s.birth_months), aSeries = monthSeries(s.anniversary_months);
+    const bTotal = bSeries.reduce((a, d) => a + d.value, 0), aTotal = aSeries.reduce((a, d) => a + d.value, 0);
+    $("birthNote").textContent = `${nf.format(bTotal)} customers with a birthday on file · this month is bold`;
+    $("annivNote").textContent = `${nf.format(aTotal)} customers with an anniversary on file · this month is bold`;
+    const narrow = $("birthChart").clientWidth < 420;
+    columnChart($("birthChart"), bSeries, color("--birth"), { highlight: nowMonth, labelEvery: narrow ? 2 : 1 });
+    columnChart($("annivChart"), aSeries, color("--anniv"), { highlight: nowMonth, labelEvery: narrow ? 2 : 1 });
+    $("birthChart").append(tableView(bSeries.map(d => [d.full, d.value]), ["Month", "Birthdays"]));
+    $("annivChart").append(tableView(aSeries.map(d => [d.full, d.value]), ["Month", "Anniversaries"]));
+
+    const t = trendSeries(s.entries_by_month);
+    const dated = t.reduce((a, d) => a + d.value, 0);
+    $("trendNote").textContent = `From “Date of Entry” · ${nf.format(dated)} of ${nf.format(total)} customers have an entry date`;
+    const tw = $("trendChart").clientWidth;
+    columnChart($("trendChart"), t, color("--trend"), { unit: "new customers", labelEvery: Math.max(1, Math.ceil(t.length / Math.max(4, tw / 60))) });
+    $("trendChart").append(tableView(t.map(d => [d.full, d.value]), ["Month", "New customers"]));
+
+    barList($("surnameChart"), (s.top_surnames || []).slice(0, 10).map(d => ({ label: d.surname, value: d.count })), color("--surname"));
+
+    const dups = data.dup_mobiles || [];
+    $("dupNote").textContent = dups.length
+      ? `${dups.length} numbers appear on more than one row — likely the same customer entered twice`
+      : "No mobile number appears on more than one row";
+    $("dupTable").innerHTML = dups.length ? `<table><thead><tr><th>Mobile</th><th>Entered as</th><th class="num">Rows</th></tr></thead><tbody>${
+      dups.map(g => `<tr><td class="phone">${esc(g.mobile)}</td><td>${g.customers.map(c => `<span class="pill">${esc(c.full_name)}</span>`).join("")}</td><td class="num">${g.count}</td></tr>`).join("")
+    }</tbody></table>` : "";
+
+    $("footer").textContent = `Also missing: ${nf.format(s.missing_last_name)} surnames, ${nf.format(s.missing_entry_date)} entry dates.`;
+  }
+
+  async function load() {
+    for (const url of ["./data.json", "./data.sample.json"]) {
+      try {
+        const r = await fetch(url, { cache: "no-store" });
+        if (r.ok) return await r.json();
+      } catch {}
+    }
+    throw new Error("No data file found");
+  }
+
+  load().then(data => {
+    render(data);
+    let raf;
+    const rerender = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => render(data)); };
+    new ResizeObserver(rerender).observe(document.querySelector(".wrap"));
+    // Chart colours come from CSS tokens, so repaint when the theme changes.
+    new MutationObserver(rerender).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
+  }).catch(err => { $("subtitle").textContent = "Could not load data: " + err.message; });
+})();
+</script>
+</body>
+</html>

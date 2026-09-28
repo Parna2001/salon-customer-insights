@@ -1,0 +1,41 @@
+# Deploys dashboard/ to GitHub Pages on every push to main.
+# One-time setup: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+# Only committed files are published, so the site always shows data.sample.json
+# (data.json is gitignored and never exists in CI).
+name: Deploy dashboard
+
+on:
+  push:
+    branches: [main]
+    paths: ["dashboard/**", ".github/workflows/deploy-dashboard.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse to publish real data
+        run: |
+          if [ -f dashboard/data.json ]; then
+            echo "dashboard/data.json must never be committed" >&2
+            exit 1
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+      - id: deployment
+        uses: actions/deploy-pages@v4
